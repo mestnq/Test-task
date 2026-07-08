@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4343a1b863f474420bd2f89b024f18fc, type: 3}
+  m_Name: ClickerConfig
+  m_EditorClassIdentifier: 
+  clickCurrencyReward: 1
+  autoClickCurrencyReward: 1
+  clickEnergyCost: 1
+  autoClickEnergyCost: 1
+  maxEnergy: 1000
+  startEnergy: 1000
+  energyRegenAmount: 10
+  energyRegenIntervalSeconds: 10
+  autoRegenCurrencyInIntervalSeconds: 3
