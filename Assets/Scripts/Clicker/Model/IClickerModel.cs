@@ -1,6 +1,6 @@
 using UniRx;
 
-namespace Game.Clicker.Model
+namespace Game.Features.Clicker.Model
 {
     public interface IClickerModel
     {

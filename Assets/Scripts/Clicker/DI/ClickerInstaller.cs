@@ -1,13 +1,13 @@
-using Game.Clicker.Model;
 using Game.Features.Clicker.Application;
-using Game.Features.Clicker.Presenter;
-using Game.Features.Clicker.Timer;
+using Game.Features.Clicker.Config;
+using Game.Features.Clicker.Model;
+using Game.Features.Clicker.Presentation;
+using Game.Features.Clicker.Service;
 using Game.Features.Clicker.View;
-using ProjectName.Features.Clicker.Config;
 using UnityEngine;
 using Zenject;
 
-namespace Clicker.DI
+namespace Game.Features.Clicker.Installers
 {
     public class ClickerInstaller : MonoInstaller
     {
@@ -16,39 +16,34 @@ namespace Clicker.DI
         public override void InstallBindings()
         {
             BindConfig();
-            BindView();
+            BindViews();
             BindModel();
-            BindServices();
+            BindApplication();
             BindPresentation();
         }
 
         private void BindConfig()
         {
-            Container.Bind<ClickerBalanceConfig>()
-                .FromInstance(config)
-                .AsSingle();
+            Container.Bind<ClickerBalanceConfig>().FromInstance(config).AsSingle();
         }
 
-        private void BindView()
+        private void BindViews()
         {
-            Container.Bind<IClickerView>()
-                .To<ClickerView>()
-                .FromComponentInHierarchy()
-                .AsSingle();
+            Container.Bind<IClickerView>().To<ClickerView>().FromComponentInHierarchy().AsSingle();
+            Container.Bind<IClickerFeedbackView>().To<ClickerFeedbackView>().FromComponentInHierarchy().AsSingle();
         }
 
         private void BindModel()
         {
-            Container.Bind<IClickerModel>()
-                .To<ClickerModel>()
-                .AsSingle();
+            Container.Bind<IClickerModel>().To<ClickerModel>().AsSingle();
         }
 
-        private void BindServices()
+        private void BindApplication()
         {
             Container.Bind<ManualClickService>().AsSingle();
             Container.Bind<AutoClickLoop>().AsSingle();
             Container.Bind<EnergyRegenLoop>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ClickerLoopRunner>().AsSingle();
         }
 
         private void BindPresentation()

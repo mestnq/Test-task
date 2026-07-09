@@ -1,108 +1,82 @@
 using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using Game.Clicker.Model;
+using Game.Features.Clicker.Model;
 using Game.Features.Clicker.Application;
-using Game.Features.Clicker.Timer;
+using Game.Features.Clicker.Service;
 using Game.Features.Clicker.View;
 using UniRx;
 using Zenject;
 
-namespace Game.Features.Clicker.Presenter
+namespace Game.Features.Clicker.Presentation
 {
     public class ClickerPresenter : IInitializable, IDisposable
     {
+        private readonly CompositeDisposable _disposables = new();
+
+        #region DI
+
         private readonly IClickerView _view;
+        private readonly IClickerFeedbackView _feedbackView;
         private readonly IClickerModel _model;
         private readonly ManualClickService _manualClickService;
-        private readonly AutoClickLoop _autoClickLoop;
-        private readonly EnergyRegenLoop _energyRegenLoop;
-
-        private readonly CompositeDisposable _disposables = new();
-        private readonly CancellationTokenSource _lifetimeCts = new();
+        private readonly ClickerLoopRunner _loopRunner;
 
         [Inject]
         public ClickerPresenter(
             IClickerView view,
+            IClickerFeedbackView feedbackView,
             IClickerModel model,
             ManualClickService manualClickService,
-            AutoClickLoop autoClickLoop,
-            EnergyRegenLoop energyRegenLoop)
+            ClickerLoopRunner loopRunner)
         {
             _view = view;
+            _feedbackView = feedbackView;
             _model = model;
             _manualClickService = manualClickService;
-            _autoClickLoop = autoClickLoop;
-            _energyRegenLoop = energyRegenLoop;
+            _loopRunner = loopRunner;
         }
+
+        #endregion
 
         public void Initialize()
         {
-            BindView();
-            BindLoopEvents();
-            StartLoops();
+            _view.BindCurrency(_model.Currency);
+            _view.BindEnergy(_model.Energy, _model.MaxEnergy);
+
+            _model.Energy
+                .Subscribe(_ => UpdateButtonState())
+                .AddTo(_disposables);
+
+            _view.ClickRequested
+                .Subscribe(_ => OnManualClick())
+                .AddTo(_disposables);
+
+            _loopRunner.AutoClickPerformed += OnAutoClickPerformed;
+
+            UpdateButtonState();
         }
 
         public void Dispose()
         {
-            _autoClickLoop.AutoClickPerformed -= HandleAutoClickPerformed;
-
+            _loopRunner.AutoClickPerformed -= OnAutoClickPerformed;
             _disposables.Dispose();
-            _lifetimeCts.Cancel();
-            _lifetimeCts.Dispose();
         }
 
-        private void BindView()
+        private void UpdateButtonState()
         {
-            BindCounters();
-            BindManualClick();
-            BindClickButtonState();
+            _view.SetClickButtonInteractable(_manualClickService.CanClick());
         }
 
-        private void BindCounters()
+        private void OnManualClick()
         {
-            _view.BindCurrency(_model.Currency);
-            _view.BindEnergy(_model.Energy, _model.MaxEnergy);
-        }
-
-        private void BindManualClick()
-        {
-            _view.ClickRequested
-                .Subscribe(_ => HandleManualClick())
-                .AddTo(_disposables);
-        }
-
-        private void BindClickButtonState()
-        {
-            _model.Energy
-                .Select(_manualClickService.CanClick)
-                .DistinctUntilChanged()
-                .Subscribe(_view.SetClickButtonInteractable)
-                .AddTo(_disposables);
-        }
-
-        private void BindLoopEvents()
-        {
-            _autoClickLoop.AutoClickPerformed += HandleAutoClickPerformed;
-        }
-
-        private void HandleManualClick()
-        {
-            if (!_manualClickService.TryProcessClick())
+            if (!_manualClickService.TryClick())
                 return;
 
-            _view.PlayManualClickFeedback();
+            _feedbackView.PlayClickFeedback(_manualClickService.ClickCurrencyReward);
         }
 
-        private void HandleAutoClickPerformed()
+        private void OnAutoClickPerformed(int reward)
         {
-            _view.PlayAutoClickFeedback();
-        }
-
-        private void StartLoops()
-        {
-            _autoClickLoop.RunAsync(_lifetimeCts.Token).Forget();
-            _energyRegenLoop.RunAsync(_lifetimeCts.Token).Forget();
+            _feedbackView.PlayClickFeedback(reward);
         }
     }
 }

@@ -1,8 +1,9 @@
-using ProjectName.Features.Clicker.Config;
+using Game.Features.Clicker.Config;
 using UniRx;
 using UnityEngine;
+using Zenject;
 
-namespace Game.Clicker.Model
+namespace Game.Features.Clicker.Model
 {
     public class ClickerModel : IClickerModel
     {
@@ -12,14 +13,20 @@ namespace Game.Clicker.Model
 
         private readonly ReactiveProperty<int> _currency = new();
         private readonly ReactiveProperty<int> _energy = new();
+
+        #region DI
+        
         private readonly ClickerBalanceConfig _config;
 
+        [Inject]
         public ClickerModel(ClickerBalanceConfig config)
         {
             _config = config;
-            _currency.Value = 0;
-            _energy.Value = _config.maxEnergy;
+
+            InitializeState();
         }
+
+        #endregion
 
         public bool TrySpendEnergy(int amount)
         {
@@ -44,6 +51,12 @@ namespace Game.Clicker.Model
                 return;
 
             _energy.Value = Mathf.Min(_energy.Value + amount, _config.maxEnergy);
+        }
+
+        private void InitializeState()
+        {
+            _currency.Value = 0;
+            _energy.Value = _config.maxEnergy;
         }
     }
 }

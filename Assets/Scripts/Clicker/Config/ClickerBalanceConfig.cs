@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ProjectName.Features.Clicker.Config
+namespace Game.Features.Clicker.Config
 {
     [CreateAssetMenu(menuName = "Game/Clicker/ClickerBalanceConfig")]
     public class ClickerBalanceConfig : ScriptableObject

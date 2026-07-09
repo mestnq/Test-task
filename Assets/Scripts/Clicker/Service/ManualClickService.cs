@@ -1,32 +1,37 @@
-using Game.Clicker.Model;
-using ProjectName.Features.Clicker.Config;
+using Game.Features.Clicker.Config;
+using Game.Features.Clicker.Model;
 
-namespace Game.Features.Clicker.Application
+namespace Game.Features.Clicker.Service
 {
     public class ManualClickService
     {
+        public int ClickEnergyCost => _config.clickEnergyCost;
+        public int ClickCurrencyReward => _config.clickCurrencyReward;
+
+        #region DI
+
         private readonly IClickerModel _model;
         private readonly ClickerBalanceConfig _config;
-
-        public int ClickCost => _config.clickEnergyCost;
-
+        
         public ManualClickService(IClickerModel model, ClickerBalanceConfig config)
         {
             _model = model;
             _config = config;
         }
 
-        public bool CanClick(int currentEnergy)
+        #endregion
+
+        public bool CanClick()
         {
-            return currentEnergy >= ClickCost;
+            return _model.Energy.Value >= ClickEnergyCost;
         }
 
-        public bool TryProcessClick()
+        public bool TryClick()
         {
-            if (!_model.TrySpendEnergy(ClickCost))
+            if (!_model.TrySpendEnergy(ClickEnergyCost))
                 return false;
 
-            _model.AddCurrency(_config.clickCurrencyReward);
+            _model.AddCurrency(ClickCurrencyReward);
             return true;
         }
     }

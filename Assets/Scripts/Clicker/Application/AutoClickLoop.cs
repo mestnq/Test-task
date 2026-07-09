@@ -1,37 +1,43 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Game.Clicker.Model;
-using ProjectName.Features.Clicker.Config;
+using Game.Features.Clicker.Config;
+using Game.Features.Clicker.Model;
+using Zenject;
 
-namespace Game.Features.Clicker.Timer
+namespace Game.Features.Clicker.Application
 {
     public class AutoClickLoop
     {
+        public event Action<int> AutoClickPerformed;
+
+        #region DI
+
         private readonly IClickerModel _model;
         private readonly ClickerBalanceConfig _config;
 
-        public event Action AutoClickPerformed;
-
+        [Inject]
         public AutoClickLoop(IClickerModel model, ClickerBalanceConfig config)
         {
             _model = model;
             _config = config;
         }
 
+        #endregion
+
         public async UniTask RunAsync(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(_config.autoRegenCurrencyInIntervalSeconds),
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.autoRegenCurrencyInIntervalSeconds),
                     cancellationToken: token);
 
                 if (!_model.TrySpendEnergy(_config.autoClickEnergyCost))
                     continue;
 
-                _model.AddCurrency(_config.autoClickCurrencyReward);
-                AutoClickPerformed?.Invoke();
+                var rewardAmount = _config.autoClickCurrencyReward;
+                _model.AddCurrency(rewardAmount);
+                AutoClickPerformed?.Invoke(rewardAmount);
             }
         }
     }

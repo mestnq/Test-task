@@ -11,7 +11,5 @@ namespace Game.Features.Clicker.View
         void BindEnergy(IReadOnlyReactiveProperty<int> energy, int maxEnergy);
 
         void SetClickButtonInteractable(bool isInteractable);
-        void PlayManualClickFeedback();
-        void PlayAutoClickFeedback();
     }
 }
