@@ -43,7 +43,7 @@ namespace Game.Features.Clicker.Installers
             Container.Bind<ManualClickService>().AsSingle();
             Container.Bind<AutoClickLoop>().AsSingle();
             Container.Bind<EnergyRegenLoop>().AsSingle();
-            Container.BindInterfacesAndSelfTo<ClickerLoopRunner>().AsSingle();
+            Container.Bind<ClickerLoopRunner>().AsSingle();
         }
 
         private void BindPresentation()

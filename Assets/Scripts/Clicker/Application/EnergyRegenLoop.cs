@@ -7,7 +7,7 @@ using Zenject;
 
 namespace Game.Features.Clicker.Application
 {
-    public class EnergyRegenLoop
+    public sealed class EnergyRegenLoop
     {
         #region DI
 
@@ -25,11 +25,20 @@ namespace Game.Features.Clicker.Application
 
         public async UniTask RunAsync(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.energyRegenIntervalSeconds), cancellationToken: token);
+                while (!token.IsCancellationRequested)
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(_config.energyRegenIntervalSeconds),
+                        cancellationToken: token);
 
-                _model.AddEnergy(_config.energyRegenAmount);
+                    _model.AddEnergy(_config.energyRegenAmount);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Нормальная остановка цикла.
             }
         }
     }

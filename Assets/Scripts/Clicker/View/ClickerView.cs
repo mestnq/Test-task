@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using TMPro;
 using UniRx;
 using UnityEngine;
@@ -6,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Game.Features.Clicker.View
 {
-    public class ClickerView : MonoBehaviour, IClickerView
+    public sealed class ClickerView : MonoBehaviour, IClickerView
     {
         [Header("UI")]
         [SerializeField] private Button clickButton;
@@ -14,11 +15,52 @@ namespace Game.Features.Clicker.View
         [SerializeField] private TMP_Text energyText;
 
         private readonly Subject<Unit> _clickRequested = new();
+        private readonly Subject<Unit> _shown = new();
+        private readonly Subject<Unit> _hidden = new();
+
+        private CompositeDisposable _bindingsDisposable;
+        private CancellationTokenSource _viewLifetimeCts;
 
         public IObservable<Unit> ClickRequested => _clickRequested;
+        public IObservable<Unit> Shown => _shown;
+        public IObservable<Unit> Hidden => _hidden;
+
+        public bool IsVisible => isActiveAndEnabled;
+        public CancellationToken ViewLifetimeToken => _viewLifetimeCts?.Token ?? CancellationToken.None;
+
+        private void Awake()
+        {
+            _bindingsDisposable = new CompositeDisposable();
+        }
+
+        private void OnEnable()
+        {
+            RecreateLifetime();
+            _shown.OnNext(Unit.Default);
+        }
+
+        private void OnDisable()
+        {
+            CancelLifetime();
+            ClearBindings();
+            _hidden.OnNext(Unit.Default);
+        }
+
+        private void OnDestroy()
+        {
+            CancelLifetime();
+            ClearBindings();
+
+            _clickRequested.Dispose();
+            _shown.Dispose();
+            _hidden.Dispose();
+        }
 
         public void OnClickButtonPressed()
         {
+            if (!IsVisible)
+                return;
+
             _clickRequested.OnNext(Unit.Default);
         }
 
@@ -26,14 +68,14 @@ namespace Game.Features.Clicker.View
         {
             currency
                 .Subscribe(UpdateCurrency)
-                .AddTo(this);
+                .AddTo(_bindingsDisposable);
         }
 
         public void BindEnergy(IReadOnlyReactiveProperty<int> energy, int maxEnergy)
         {
             energy
                 .Subscribe(value => UpdateEnergy(value, maxEnergy))
-                .AddTo(this);
+                .AddTo(_bindingsDisposable);
         }
 
         public void SetClickButtonInteractable(bool isInteractable)
@@ -54,9 +96,28 @@ namespace Game.Features.Clicker.View
                 energyText.text = $"{value}/{maxEnergy}";
         }
 
-        private void OnDestroy()
+        private void RecreateLifetime()
         {
-            _clickRequested.Dispose();
+            CancelLifetime();
+            _viewLifetimeCts = new CancellationTokenSource();
+        }
+
+        private void CancelLifetime()
+        {
+            if (_viewLifetimeCts == null)
+                return;
+
+            if (!_viewLifetimeCts.IsCancellationRequested)
+                _viewLifetimeCts.Cancel();
+
+            _viewLifetimeCts.Dispose();
+            _viewLifetimeCts = null;
+        }
+
+        private void ClearBindings()
+        {
+            _bindingsDisposable?.Dispose();
+            _bindingsDisposable = new CompositeDisposable();
         }
     }
 }

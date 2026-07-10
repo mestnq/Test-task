@@ -27,17 +27,25 @@ namespace Game.Features.Clicker.Application
 
         public async UniTask RunAsync(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.autoRegenCurrencyInIntervalSeconds),
-                    cancellationToken: token);
+                while (!token.IsCancellationRequested)
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(_config.autoRegenCurrencyInIntervalSeconds),
+                        cancellationToken: token);
 
-                if (!_model.TrySpendEnergy(_config.autoClickEnergyCost))
-                    continue;
+                    if (!_model.TrySpendEnergy(_config.autoClickEnergyCost))
+                        continue;
 
-                var rewardAmount = _config.autoClickCurrencyReward;
-                _model.AddCurrency(rewardAmount);
-                AutoClickPerformed?.Invoke(rewardAmount);
+                    var rewardAmount = _config.autoClickCurrencyReward;
+                    _model.AddCurrency(rewardAmount);
+                    AutoClickPerformed?.Invoke(rewardAmount);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Нормальная остановка цикла.
             }
         }
     }

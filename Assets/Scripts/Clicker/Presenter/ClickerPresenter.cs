@@ -1,6 +1,7 @@
 using System;
-using Game.Features.Clicker.Model;
+using System.Threading;
 using Game.Features.Clicker.Application;
+using Game.Features.Clicker.Model;
 using Game.Features.Clicker.Service;
 using Game.Features.Clicker.View;
 using UniRx;
@@ -10,7 +11,8 @@ namespace Game.Features.Clicker.Presentation
 {
     public class ClickerPresenter : IInitializable, IDisposable
     {
-        private readonly CompositeDisposable _disposables = new();
+        private readonly CompositeDisposable _rootDisposables = new();
+        private CompositeDisposable _uiSessionDisposables;
 
         #region DI
 
@@ -39,26 +41,45 @@ namespace Game.Features.Clicker.Presentation
 
         public void Initialize()
         {
-            _view.BindCurrency(_model.Currency);
-            _view.BindEnergy(_model.Energy, _model.MaxEnergy);
+            _view.Shown.Subscribe(_ => StartUiSession()).AddTo(_rootDisposables);
 
-            _model.Energy
-                .Subscribe(_ => UpdateButtonState())
-                .AddTo(_disposables);
+            _view.Hidden.Subscribe(_ => StopUiSession()).AddTo(_rootDisposables);
 
-            _view.ClickRequested
-                .Subscribe(_ => OnManualClick())
-                .AddTo(_disposables);
-
-            _loopRunner.AutoClickPerformed += OnAutoClickPerformed;
-
-            UpdateButtonState();
+            if (_view.IsVisible)
+                StartUiSession();
         }
 
         public void Dispose()
         {
+            StopUiSession();
+            _rootDisposables.Dispose();
+        }
+
+        private void StartUiSession()
+        {
+            StopUiSession();
+
+            _uiSessionDisposables = new CompositeDisposable();
+
+            _view.BindCurrency(_model.Currency);
+            _view.BindEnergy(_model.Energy, _model.MaxEnergy);
+
+            _model.Energy.Subscribe(_ => UpdateButtonState()).AddTo(_uiSessionDisposables);
+            _view.ClickRequested.Subscribe(_ => OnManualClick(_view.ViewLifetimeToken)).AddTo(_uiSessionDisposables);
+
+            _loopRunner.AutoClickPerformed += OnAutoClickPerformed;
+            _loopRunner.Start(_view.ViewLifetimeToken);
+
+            UpdateButtonState();
+        }
+
+        private void StopUiSession()
+        {
             _loopRunner.AutoClickPerformed -= OnAutoClickPerformed;
-            _disposables.Dispose();
+            _loopRunner.Stop();
+
+            _uiSessionDisposables?.Dispose();
+            _uiSessionDisposables = null;
         }
 
         private void UpdateButtonState()
@@ -66,17 +87,17 @@ namespace Game.Features.Clicker.Presentation
             _view.SetClickButtonInteractable(_manualClickService.CanClick());
         }
 
-        private void OnManualClick()
+        private void OnManualClick(CancellationToken token)
         {
             if (!_manualClickService.TryClick())
                 return;
 
-            _feedbackView.PlayClickFeedback(_manualClickService.ClickCurrencyReward);
+            _feedbackView.PlayClickFeedback(_manualClickService.ClickCurrencyReward, token);
         }
 
         private void OnAutoClickPerformed(int reward)
         {
-            _feedbackView.PlayClickFeedback(reward);
+            _feedbackView.PlayClickFeedback(reward, _view.ViewLifetimeToken);
         }
     }
 }

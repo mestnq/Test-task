@@ -1,13 +1,13 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Zenject;
 
 namespace Game.Features.Clicker.Application
 {
-    public class ClickerLoopRunner : IInitializable, IDisposable
+    public sealed class ClickerLoopRunner : IDisposable
     {
-        private readonly CancellationTokenSource _cts = new();
+        private CancellationTokenSource _sessionCts;
+        private bool _isRunning;
 
         public event Action<int> AutoClickPerformed;
 
@@ -16,8 +16,9 @@ namespace Game.Features.Clicker.Application
         private readonly AutoClickLoop _autoClickLoop;
         private readonly EnergyRegenLoop _energyRegenLoop;
 
-        [Inject]
-        public ClickerLoopRunner(AutoClickLoop autoClickLoop, EnergyRegenLoop energyRegenLoop)
+        public ClickerLoopRunner(
+            AutoClickLoop autoClickLoop,
+            EnergyRegenLoop energyRegenLoop)
         {
             _autoClickLoop = autoClickLoop;
             _energyRegenLoop = energyRegenLoop;
@@ -25,20 +26,42 @@ namespace Game.Features.Clicker.Application
 
         #endregion
 
-        public void Initialize()
+        public void Start(CancellationToken externalToken)
         {
+            if (_isRunning)
+                return;
+
+            _sessionCts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
             _autoClickLoop.AutoClickPerformed += OnAutoClickPerformed;
 
-            _autoClickLoop.RunAsync(_cts.Token).Forget();
-            _energyRegenLoop.RunAsync(_cts.Token).Forget();
+            _autoClickLoop.RunAsync(_sessionCts.Token).Forget();
+            _energyRegenLoop.RunAsync(_sessionCts.Token).Forget();
+
+            _isRunning = true;
+        }
+
+        public void Stop()
+        {
+            if (!_isRunning)
+                return;
+
+            _autoClickLoop.AutoClickPerformed -= OnAutoClickPerformed;
+
+            if (_sessionCts != null)
+            {
+                if (!_sessionCts.IsCancellationRequested)
+                    _sessionCts.Cancel();
+
+                _sessionCts.Dispose();
+                _sessionCts = null;
+            }
+
+            _isRunning = false;
         }
 
         public void Dispose()
         {
-            _autoClickLoop.AutoClickPerformed -= OnAutoClickPerformed;
-
-            _cts.Cancel();
-            _cts.Dispose();
+            Stop();
         }
 
         private void OnAutoClickPerformed(int rewardAmount)
