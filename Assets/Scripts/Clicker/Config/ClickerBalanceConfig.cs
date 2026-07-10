@@ -5,28 +5,28 @@ namespace Game.Features.Clicker.Config
     [CreateAssetMenu(menuName = "Game/Clicker/ClickerBalanceConfig")]
     public class ClickerBalanceConfig : ScriptableObject
     {
-        [Header("Rewards")]
-        /// <summary> Кол-во начисляемой валюты при клике </summary>
-        public int clickCurrencyReward = 1;
-        /// <summary> Кол-во начисляемой валюты при авто клике </summary>
-        public int autoClickCurrencyReward = 1;
+        [field: Header("Rewards")]
+        // Кол-во начисляемой валюты при клике
+        [field: SerializeField] public int ClickCurrencyReward { get; private set; } = 1;
+        // Кол-во начисляемой валюты при авто клике
+        [field: SerializeField] public int AutoClickCurrencyReward { get; private set; } = 1;
         
-        [Header("Costs")] 
-        /// <summary> Кол-во списаной энергии при клике </summary>
-        public int clickEnergyCost = 1;
-        /// <summary> Кол-во списаной энергии при авто клике </summary>
-        public int autoClickEnergyCost = 1;
+        [field: Header("Costs")] 
+        // Кол-во списаной энергии при клике
+        [field: SerializeField] public int ClickEnergyCost { get; private set; } = 1;
+        /// <summary> Кол-во списаной энергии при авто клике
+        [field: SerializeField] public int AutoClickEnergyCost { get; private set; } = 1;
 
-        [Header("Energy")] 
-        public int maxEnergy = 1000;
-        public int startEnergy = 1000;
-        /// <summary> Кол-во автоматически начисляемой энергии </summary>
-        public int energyRegenAmount = 10;
-        /// <summary> Через сколько секунд автоматически начислится энергия </summary>
-        public float energyRegenIntervalSeconds = 10f;
+        [field: Header("Energy")] 
+        [field: SerializeField] public int MaxEnergy { get; private set; } = 1000;
+        [field: SerializeField] public int StartEnergy { get; private set; } = 1000;
+        // Кол-во автоматически начисляемой энергии
+        [field: SerializeField] public int EnergyRegenAmount { get; private set; } = 10;
+        // Через сколько секунд автоматически начислится энергия
+        [field: SerializeField] public float EnergyRegenIntervalSeconds { get; private set; } = 10f;
 
-        [Header("Auto regen currency")] 
-        /// <summary> Через какой промежуток времени происходит автосбор валюты </summary>
-        public float autoRegenCurrencyInIntervalSeconds = 3f;
+        [field: Header("Auto regen currency")] 
+        // Через какой промежуток времени происходит автосбор валюты
+        [field: SerializeField] public float AutoRegenCurrencyInIntervalSeconds { get; private set; } = 3f;
     }
 }

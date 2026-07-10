@@ -30,10 +30,10 @@ namespace Game.Features.Clicker.Application
                 while (!token.IsCancellationRequested)
                 {
                     await UniTask.Delay(
-                        TimeSpan.FromSeconds(_config.energyRegenIntervalSeconds),
+                        TimeSpan.FromSeconds(_config.EnergyRegenIntervalSeconds),
                         cancellationToken: token);
 
-                    _model.AddEnergy(_config.energyRegenAmount);
+                    _model.AddEnergy(_config.EnergyRegenAmount);
                 }
             }
             catch (OperationCanceledException)

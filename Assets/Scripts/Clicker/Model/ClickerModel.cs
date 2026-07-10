@@ -9,7 +9,7 @@ namespace Game.Features.Clicker.Model
     {
         public IReadOnlyReactiveProperty<int> Currency => _currency;
         public IReadOnlyReactiveProperty<int> Energy => _energy;
-        public int MaxEnergy => _config.maxEnergy;
+        public int MaxEnergy => _config.MaxEnergy;
 
         private readonly ReactiveProperty<int> _currency = new();
         private readonly ReactiveProperty<int> _energy = new();
@@ -50,13 +50,13 @@ namespace Game.Features.Clicker.Model
             if (amount <= 0)
                 return;
 
-            _energy.Value = Mathf.Min(_energy.Value + amount, _config.maxEnergy);
+            _energy.Value = Mathf.Min(_energy.Value + amount, _config.MaxEnergy);
         }
 
         private void InitializeState()
         {
             _currency.Value = 0;
-            _energy.Value = _config.maxEnergy;
+            _energy.Value = _config.StartEnergy;
         }
     }
 }

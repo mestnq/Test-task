@@ -5,8 +5,8 @@ namespace Game.Features.Clicker.Service
 {
     public class ManualClickService
     {
-        public int ClickEnergyCost => _config.clickEnergyCost;
-        public int ClickCurrencyReward => _config.clickCurrencyReward;
+        public int ClickEnergyCost => _config.ClickEnergyCost;
+        public int ClickCurrencyReward => _config.ClickCurrencyReward;
 
         #region DI
 

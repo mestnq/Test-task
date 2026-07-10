@@ -32,13 +32,13 @@ namespace Game.Features.Clicker.Application
                 while (!token.IsCancellationRequested)
                 {
                     await UniTask.Delay(
-                        TimeSpan.FromSeconds(_config.autoRegenCurrencyInIntervalSeconds),
+                        TimeSpan.FromSeconds(_config.AutoRegenCurrencyInIntervalSeconds),
                         cancellationToken: token);
 
-                    if (!_model.TrySpendEnergy(_config.autoClickEnergyCost))
+                    if (!_model.TrySpendEnergy(_config.AutoClickEnergyCost))
                         continue;
 
-                    var rewardAmount = _config.autoClickCurrencyReward;
+                    var rewardAmount = _config.AutoClickCurrencyReward;
                     _model.AddCurrency(rewardAmount);
                     AutoClickPerformed?.Invoke(rewardAmount);
                 }
